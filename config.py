@@ -28,8 +28,11 @@ error class:
 """
 from configparser import ConfigParser
 
+__all__ = ["create_new", "read", "save", "validate",
+           "UnableToCreateFile", "InvalidConfigurationFile"]
 
-def create_blank_config_file() -> ConfigParser:
+
+def create_new() -> ConfigParser:
     """Creates and returns a default ini file in a ConfigParser object"""
     config = ConfigParser(allow_no_value=True)
     xform = config.optionxform
@@ -48,7 +51,7 @@ def create_blank_config_file() -> ConfigParser:
     return config
 
 
-def save_config_file(config: ConfigParser, file: str = 'config.ini'):
+def save(config: ConfigParser, file: str = 'config.ini'):
     """Saves passed ConfigParser object to file location"""
     if not isinstance(config, ConfigParser):
         raise TypeError("ConfigParser type not passed to save_config_file")
@@ -62,7 +65,7 @@ def save_config_file(config: ConfigParser, file: str = 'config.ini'):
         raise TypeError("Invalid Parameter: {0}".format(err))
 
 
-def read_config_file(file: str = 'config.ini') -> ConfigParser:
+def read(file: str = 'config.ini') -> ConfigParser:
     """Attempts to read passed config.ini file and return the results in a ConfigParser object"""
     config = ConfigParser()
 
@@ -74,8 +77,8 @@ def read_config_file(file: str = 'config.ini') -> ConfigParser:
     return config
 
 
-def validate_config_file(file: str = 'config.ini') -> (ConfigParser, Exception):
-    config = read_config_file(file)
+def validate(file: str = 'config.ini') -> (ConfigParser, Exception):
+    config = read(file)
 
     config_to_lower = {}
     for items in config:
@@ -129,7 +132,7 @@ if __name__ == "__main__":
     file_name = "config.ini"
     print('Generating default example configuration file ...')
     try:
-        save_config_file(config=create_blank_config_file(), file=file_name)
+        save(config=create_new(), file=file_name)
     except Exception as err:
         raise UnableToCreateFile(err)
     print("File created: {}".format(file_name))
