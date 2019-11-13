@@ -1,39 +1,24 @@
-"""Configuration file management functions.
-
-This file contains functions to manage the creation and verification of
-configuration files used in SecurityCenter programs.
-
-This file can also be run standalone to generate an example configuration file.
-
-functions:
-    create_new() -> configparser.ConfigParser:
-        Generate and return an example configuration file object
-        as a ConfigParser object
-
-    validate(file: str = DEFAULT_FILE_NAME) -> (configparser.ConfigParser, Exception):
-        Reads and validates the file provided to be valid config, containing all required sections.
-        Returns a ConfigParser object and any exception errors
-
-    read(file: str = DEFAULT_FILE_NAME) -> configparser.ConfigParser:
-        Reads provided file, returning a ConfigParser object.
-
-    save(config: configparser.ConfigParser, file: str = DEFAULT_FILE_NAME):
-        Writes the provided ConfigParser object to a file.
-
-constants:
-    DEFAULT_FILE_NAME
-        Used as a default name for all functions.
-
-error classes:
-    InvalidConfigurationFile
-        Raised for a failed configuration file validation
-"""
+from base64 import b64decode
 from configparser import ConfigParser
 
 DEFAULT_FILE_NAME = 'TenableSCConfig.ini'
 
-__all__ = ['create_new', 'read', 'save', 'validate',
-           'UnableToCreateFile', 'InvalidConfigurationFile', 'DEFAULT_FILE_NAME']
+config = None
+
+__all__ = ['create_new', 'read', 'save', 'validate', 'load',
+           'UnableToCreateFile', 'InvalidConfigurationFile',
+           'DEFAULT_FILE_NAME', 'config', 'Config']
+
+
+class Config:
+    def __init__(self, host):
+        self.host = host
+        self.username = ''
+        self.password = ''
+
+    def set(self, username, password):
+        self.username = username
+        self.password = password
 
 
 def create_new() -> ConfigParser:
@@ -71,6 +56,7 @@ def save(config: ConfigParser, file: str = DEFAULT_FILE_NAME):
 
 def read(file: str = DEFAULT_FILE_NAME) -> ConfigParser:
     """Attempts to read passed file and return the results in a ConfigParser object"""
+
     config = ConfigParser()
 
     try:
@@ -81,11 +67,11 @@ def read(file: str = DEFAULT_FILE_NAME) -> ConfigParser:
     return config
 
 
-def validate(file: str = DEFAULT_FILE_NAME) -> (ConfigParser, Exception):
-    config = read(file)
+def validate(file: str = DEFAULT_FILE_NAME) -> (Config, Exception):
+    config_to_validate = read(file)
 
     config_to_lower = {}
-    for items in config:
+    for items in config_to_validate:
         config_to_lower[items.lower()] = items
 
     if 'securitycenter' not in config_to_lower:
@@ -93,19 +79,47 @@ def validate(file: str = DEFAULT_FILE_NAME) -> (ConfigParser, Exception):
     if 'user' not in config_to_lower:
         return None, InvalidConfigurationFile('[User] section not found')
 
-    if 'hostname' not in config[config_to_lower['securitycenter']]:
+    if 'hostname' not in config_to_validate[config_to_lower['securitycenter']]:
         return None, InvalidConfigurationFile('hostname parameter not found')
 
-    if 'username' not in config[config_to_lower['user']]:
+    if 'username' not in config_to_validate[config_to_lower['user']]:
         return None, InvalidConfigurationFile('username parameter not found')
-    if 'password' not in config[config_to_lower['user']] and 'password64' not in config[config_to_lower['user']]:
+    if 'password' not in config_to_validate[config_to_lower['user']] and 'password64' not in config_to_validate[
+        config_to_lower['user']]:
         return None, InvalidConfigurationFile('password parameter not found')
 
-    return config, None
+    return config_to_validate, None
+
+
+def load(config) -> Config:
+    output = None
+    if isinstance(config, str):
+        config, e = validate(config)
+        if e:
+            raise e
+    if isinstance(config, ConfigParser):
+        try:
+            sections = {k.lower(): v for k, v in config.items()}
+            sc_section = {k.lower(): v for k, v in sections['securitycenter'].items()}
+            user_section = {k.lower(): v for k, v in sections['user'].items()}
+            hostname = sc_section['hostname']
+            username = user_section['username']
+            if 'password' in user_section.keys():
+                password = user_section['password']
+            if 'password64' in user_section.keys():
+                password = b64decode(user_section['password64']).decode('utf-8')
+            output = Config(hostname)
+            output.set(username, password)
+        except Exception as e:
+            raise e
+    else:
+        raise NotImplemented(f'Unable to load file type: {type(config)}')
+
+    return output
 
 
 # exception classes
-class Error(Exception):
+class _Error(Exception):
     """Base class for config exceptions."""
 
     def __init__(self, msg=''):
@@ -118,14 +132,14 @@ class Error(Exception):
     __str__ = __repr__
 
 
-class InvalidConfigurationFile(Error):
+class InvalidConfigurationFile(_Error):
     """Exception for an invalid configuration file"""
 
     def __init__(self, msg=''):
         super(InvalidConfigurationFile, self).__init__(f'Invalid Configuration File: {msg}')
 
 
-class UnableToCreateFile(Error):
+class UnableToCreateFile(_Error):
 
     def __init__(self, msg=''):
         super(UnableToCreateFile, self).__init__(f'Unable to Create File: {msg}')
@@ -133,10 +147,18 @@ class UnableToCreateFile(Error):
 
 if __name__ == '__main__':
 
-    file_name = DEFAULT_FILE_NAME
+    f = DEFAULT_FILE_NAME
     print('Generating default example configuration file ...')
     try:
-        save(config=create_new(), file=file_name)
+        save(config=create_new(), file=f)
     except Exception as e:
         raise UnableToCreateFile(e)
-    print(f'File created: {file_name}')
+    print(f'File created: {f}')
+else:
+    try:
+        with open(DEFAULT_FILE_NAME, 'r') as f:
+            loaded_config = load(f.name)
+            if loaded_config:
+                config = loaded_config
+    except FileNotFoundError:
+        pass
