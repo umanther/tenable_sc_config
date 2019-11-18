@@ -10,7 +10,7 @@ A tool to create & load a config .ini file for connecting to a Tenable.SC instan
 Usage
 =====
 - Running the config.py file as a the main file will create a blank ini file (with notes)
-- Importing the package will attempt to load the default filename
+- Importing the package will attempt to load the default filename into the config variable
 
   - If the default file is found: loads the file and returns an object containing the results
   - If the default file is not found: returns None as the object

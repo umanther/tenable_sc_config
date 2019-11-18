@@ -3,14 +3,16 @@ from configparser import ConfigParser
 
 DEFAULT_FILE_NAME = 'TenableSCConfig.ini'
 
+DEFAULT_VALUES = {'<server address>', '<user name>', '<password>'}
+
 config = None
 
 __all__ = ['create_new', 'read', 'save', 'validate', 'load',
            'UnableToCreateFile', 'InvalidConfigurationFile',
-           'DEFAULT_FILE_NAME', 'config', 'Config']
+           'DEFAULT_FILE_NAME', 'DEFAULT_VALUES', 'config', 'SCConfig']
 
 
-class Config:
+class SCConfig:
     def __init__(self, host):
         self.host = host
         self.username = ''
@@ -20,6 +22,13 @@ class Config:
         self.username = username
         self.password = password
 
+    @property
+    def isnotdefault(self):
+        output = True
+        if any([self.host in DEFAULT_VALUES, self.username in DEFAULT_VALUES, self.password in DEFAULT_VALUES]):
+            output = False
+        return output
+
 
 def create_new() -> ConfigParser:
     """Creates and returns a default ini file in a ConfigParser object"""
@@ -28,15 +37,15 @@ def create_new() -> ConfigParser:
     config.optionxform = str
     config['SecurityCenter'] = {"# Do not include http:// or https:// with 'hostname'": None}
     config.optionxform = xform
-    config['SecurityCenter']['hostname'] = 'serveraddress.com'
-    config['User'] = {'username': 'username'}
+    config['SecurityCenter']['hostname'] = '<server address>'
+    config['User'] = {'username': '<user name>'}
     xform = config.optionxform
     config.optionxform = str
     config['User']["# Valid password keys are 'password' and 'password64'"] = None
     config['User'][
         "# 'password64' is a Base64 encoded password and will be used over 'password' if both are present"] = None
     config.optionxform = xform
-    config['User']['password'] = 'password'
+    config['User']['password'] = '<password>'
     return config
 
 
@@ -67,7 +76,7 @@ def read(file: str = DEFAULT_FILE_NAME) -> ConfigParser:
     return config
 
 
-def validate(file: str = DEFAULT_FILE_NAME) -> (Config, Exception):
+def validate(file: str = DEFAULT_FILE_NAME) -> (SCConfig, Exception):
     config_to_validate = read(file)
 
     config_to_lower = {}
@@ -91,7 +100,7 @@ def validate(file: str = DEFAULT_FILE_NAME) -> (Config, Exception):
     return config_to_validate, None
 
 
-def load(config) -> Config:
+def load(config) -> SCConfig:
     output = None
     if isinstance(config, str):
         config, e = validate(config)
@@ -108,7 +117,7 @@ def load(config) -> Config:
                 password = user_section['password']
             if 'password64' in user_section.keys():
                 password = b64decode(user_section['password64']).decode('utf-8')
-            output = Config(hostname)
+            output = SCConfig(hostname)
             output.set(username, password)
         except Exception as e:
             raise e
@@ -146,7 +155,6 @@ class UnableToCreateFile(_Error):
 
 
 if __name__ == '__main__':
-
     f = DEFAULT_FILE_NAME
     print('Generating default example configuration file ...')
     try:
@@ -159,6 +167,9 @@ else:
         with open(DEFAULT_FILE_NAME, 'r') as f:
             loaded_config = load(f.name)
             if loaded_config:
-                config = loaded_config
+                if loaded_config.isnotdefault:
+                    config = loaded_config
+                else:
+                    raise InvalidConfigurationFile('Contains default values.')
     except FileNotFoundError:
         pass
