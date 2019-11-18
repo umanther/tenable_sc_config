@@ -4,11 +4,11 @@ with open('README.rst', 'r') as f:
     __long_description__ = f.read()
 
 __name__ = 'tenable_sc_config'
-__version__ = '1.0.0'
+__version__ = '1.0.1'
 __author__ = 'Geoff Hellstrand'
 __desc__ = 'A simple tool to create & load an .ini file for logging into an instance of Tenable.SC'
 __author_email__ = 'ubil@hotmail.com'
-__license__ = "Apache 2.0"
+__license__ = 'GPLv3'
 __url__ = 'https://github.com/umanther/tenable_sc_config'
 __keywords__ = ['python', 'tenable', 'security', 'center', 'SC', 'login', 'configuration', 'ini']
 __packages__ = find_packages()
