@@ -7,8 +7,6 @@ DEFAULT_FILE_NAME = 'TenableSCConfig.ini'
 
 DEFAULT_VALUES = {'<server address>', '<user name>', '<password>'}
 
-config = None
-
 __all__ = ['create_new', 'read', 'save', 'validate', 'load',
            'DEFAULT_FILE_NAME', 'DEFAULT_VALUES', 'config', 'SCConfig']
 
@@ -29,6 +27,9 @@ class SCConfig:
         if any([self.hostname in DEFAULT_VALUES, self.username in DEFAULT_VALUES, self.password in DEFAULT_VALUES]):
             output = False
         return output
+
+
+config: SCConfig = None
 
 
 def create_new() -> ConfigParser:
