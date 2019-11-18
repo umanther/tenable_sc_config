@@ -1,6 +1,8 @@
 from base64 import b64decode
 from configparser import ConfigParser
 
+from tenable_sc_config.errors import *
+
 DEFAULT_FILE_NAME = 'TenableSCConfig.ini'
 
 DEFAULT_VALUES = {'<server address>', '<user name>', '<password>'}
@@ -8,13 +10,12 @@ DEFAULT_VALUES = {'<server address>', '<user name>', '<password>'}
 config = None
 
 __all__ = ['create_new', 'read', 'save', 'validate', 'load',
-           'UnableToCreateFile', 'InvalidConfigurationFile',
            'DEFAULT_FILE_NAME', 'DEFAULT_VALUES', 'config', 'SCConfig']
 
 
 class SCConfig:
-    def __init__(self, host):
-        self.host = host
+    def __init__(self, hostname):
+        self.hostname = hostname
         self.username = ''
         self.password = ''
 
@@ -25,7 +26,7 @@ class SCConfig:
     @property
     def isnotdefault(self):
         output = True
-        if any([self.host in DEFAULT_VALUES, self.username in DEFAULT_VALUES, self.password in DEFAULT_VALUES]):
+        if any([self.hostname in DEFAULT_VALUES, self.username in DEFAULT_VALUES, self.password in DEFAULT_VALUES]):
             output = False
         return output
 
@@ -125,33 +126,6 @@ def load(config) -> SCConfig:
         raise NotImplemented(f'Unable to load file type: {type(config)}')
 
     return output
-
-
-# exception classes
-class _Error(Exception):
-    """Base class for config exceptions."""
-
-    def __init__(self, msg=''):
-        self.message = msg
-        Exception.__init__(self, msg)
-
-    def __repr__(self):
-        return self.message
-
-    __str__ = __repr__
-
-
-class InvalidConfigurationFile(_Error):
-    """Exception for an invalid configuration file"""
-
-    def __init__(self, msg=''):
-        super(InvalidConfigurationFile, self).__init__(f'Invalid Configuration File: {msg}')
-
-
-class UnableToCreateFile(_Error):
-
-    def __init__(self, msg=''):
-        super(UnableToCreateFile, self).__init__(f'Unable to Create File: {msg}')
 
 
 if __name__ == '__main__':
