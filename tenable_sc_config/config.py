@@ -5,7 +5,7 @@ from tenable_sc_config.errors import *
 
 DEFAULT_FILE_NAME = 'TenableSCConfig.ini'
 
-DEFAULT_VALUES = {'<server address>', '<user name>', '<password>'}
+DEFAULT_VALUES = {'<server address>', '<user name>', '<password>', '<access key>', '<secret key>'}
 
 __all__ = ['create_new', 'read', 'save', 'validate', 'load',
            'DEFAULT_FILE_NAME', 'DEFAULT_VALUES', 'config', 'SCConfig']
@@ -53,8 +53,8 @@ def create_new() -> ConfigParser:
         "# 'password64' is a Base64 encoded password and will be used over 'password' if both are present"] = None
     config.optionxform = xform
     config['User']['password'] = '<password>'
-    config['User']['access_key'] = '<Access Key>'
-    config['User']['secret_key'] = '<Secret Key>'
+    config['User']['access_key'] = '<access key>'
+    config['User']['secret_key'] = '<secret key>'
     return config
 
 
