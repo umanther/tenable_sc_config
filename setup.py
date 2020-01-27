@@ -2,6 +2,7 @@ from setuptools import setup, find_packages
 
 with open('README.rst', 'r') as f:
     __long_description__ = f.read()
+__long_description_content_type__ = 'text/x-rst'
 
 __name__ = 'tenable_sc_config'
 __version__ = '1.0.3'
@@ -28,6 +29,7 @@ setup(
     version=__version__,
     description=__desc__,
     long_description=__long_description__,
+    long_description_content_type=__long_description_content_type__,
     author=__author__,
     author_email=__author_email__,
     url=__url__,
