@@ -15,6 +15,8 @@ Usage
   - If the default file is found: loads the file and returns an object containing the results
   - If the default file is not found: returns None as the object
 
+- Support for both username/password and API keys is provided, however only one pair is required
+
 Source
 ------
 Github_

@@ -40,14 +40,21 @@ def create_new() -> ConfigParser:
     config['SecurityCenter'] = {"# Do not include http:// or https:// with 'hostname'": None}
     config.optionxform = xform
     config['SecurityCenter']['hostname'] = '<server address>'
-    config['User'] = {'username': '<user name>'}
-    xform = config.optionxform
+    config.optionxform = str
+    config['User'] = {"# API keys, if present, will be used over a username/password configuration": None}
+    config['User'][
+        "# It is not necessary to include both username/password and API keys."
+        "  Include whichever pair you intend to use"] = None
+    config.optionxform = xform
+    config['User']['username'] = '<user name>'
     config.optionxform = str
     config['User']["# Valid password keys are 'password' and 'password64'"] = None
     config['User'][
         "# 'password64' is a Base64 encoded password and will be used over 'password' if both are present"] = None
     config.optionxform = xform
     config['User']['password'] = '<password>'
+    config['User']['access_key'] = '<Access Key>'
+    config['User']['secret_key'] = '<Secret Key>'
     return config
 
 
