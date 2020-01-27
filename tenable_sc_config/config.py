@@ -14,17 +14,43 @@ __all__ = ['create_new', 'read', 'save', 'validate', 'load',
 class SCConfig:
     def __init__(self, hostname):
         self.hostname = hostname
-        self.username = ''
-        self.password = ''
+        self.username = None
+        self.password = None
+        self.access_key = None
+        self.secret_key = None
 
-    def set(self, username, password):
+    def setPword(self, username, password):
         self.username = username
         self.password = password
+
+    def setAPI(self, access_key, secret_key):
+        self.access_key = access_key
+        self.secret_key = secret_key
+
+    def get(self) -> (str, (str, str)):
+        if self.isnotdefault:
+            if self.access_key:
+                return 'api', self.getAPI()
+            elif self.username:
+                return 'pword', self.getPword()
+            else:
+                return None, None
+        else:
+            return None, None
+
+    def getPword(self) -> (str, str):
+        return self.username, self.password
+
+    def getAPI(self) -> (str, str):
+        return self.access_key, self.secret_key
 
     @property
     def isnotdefault(self):
         output = True
-        if any([self.hostname in DEFAULT_VALUES, self.username in DEFAULT_VALUES, self.password in DEFAULT_VALUES]):
+        if self.hostname in DEFAULT_VALUES:
+            output = False
+        if all([self.username, any([self.username in DEFAULT_VALUES, self.password in DEFAULT_VALUES])]) or \
+                all([self.access_key, any([self.access_key in DEFAULT_VALUES, self.secret_key in DEFAULT_VALUES])]):
             output = False
         return output
 
@@ -100,11 +126,15 @@ def validate(file: str = DEFAULT_FILE_NAME) -> (SCConfig, Exception):
     if 'hostname' not in config_to_validate[config_to_lower['securitycenter']]:
         return None, InvalidConfigurationFile('hostname parameter not found')
 
-    if 'username' not in config_to_validate[config_to_lower['user']]:
-        return None, InvalidConfigurationFile('username parameter not found')
-    if 'password' not in config_to_validate[config_to_lower['user']] and 'password64' not in config_to_validate[
-        config_to_lower['user']]:
-        return None, InvalidConfigurationFile('password parameter not found')
+    if 'username' in config_to_validate[config_to_lower['user']]:
+        if 'password' not in config_to_validate[config_to_lower['user']] and 'password64' not in config_to_validate[
+            config_to_lower['user']]:
+            return None, InvalidConfigurationFile('username provided but password parameter not found')
+    elif 'access_key' in config_to_validate[config_to_lower['user']]:
+        if 'secret_key' not in config_to_validate[config_to_lower['user']]:
+            return None, InvalidConfigurationFile('api access key provided but secret key parameter not found')
+    else:
+        return None, InvalidConfigurationFile('configuration file must include username/password or API keypair')
 
     return config_to_validate, None
 
@@ -116,18 +146,30 @@ def load(config) -> SCConfig:
         if e:
             raise e
     if isinstance(config, ConfigParser):
+        username = None
+        password = None
+        access_key = None
+        secret_key = None
+
         try:
             sections = {k.lower(): v for k, v in config.items()}
             sc_section = {k.lower(): v for k, v in sections['securitycenter'].items()}
             user_section = {k.lower(): v for k, v in sections['user'].items()}
             hostname = sc_section['hostname']
-            username = user_section['username']
-            if 'password' in user_section.keys():
-                password = user_section['password']
-            if 'password64' in user_section.keys():
-                password = b64decode(user_section['password64']).decode('utf-8')
+            if 'access_key' in user_section:
+                access_key = user_section['access_key']
+                secret_key = user_section['secret_key']
+            if 'username' in user_section:
+                username = user_section['username']
+                if 'password' in user_section.keys():
+                    password = user_section['password']
+                if 'password64' in user_section.keys():
+                    password = b64decode(user_section['password64']).decode('utf-8')
             output = SCConfig(hostname)
-            output.set(username, password)
+            if username:
+                output.setPword(username, password)
+            if access_key:
+                output.setAPI(access_key, secret_key)
         except Exception as e:
             raise e
     else:
